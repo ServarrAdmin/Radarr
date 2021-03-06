@@ -180,5 +180,39 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
             Subject.Map(_umlautInfo, "", _movieSearchCriteria).Movie.Should().Be(_movieSearchCriteria.Movie);
             Subject.Map(_umlautAltInfo, "", _movieSearchCriteria).Movie.Should().Be(_movieSearchCriteria.Movie);
         }
+
+        [Test]
+        public void should_handle_anime_underrange()
+        {
+            var title = "[DroneRaws] Phantom - The Final Countdown - 04 [1080p].mkv";
+
+            var parsedEpisodeInfo = Parser.Parser.ParseTitle(title);
+
+            Mocker.GetMock<ISceneMappingService>()
+                  .Setup(s => s.FindSceneMapping(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+                  .Returns(new SceneMapping
+                  {
+                      Title = "Phantom: The Final Countdown",
+                      ParseTerm = "phantomthefinalcountdown",
+                      SceneSeasonNumber = 4,
+                      SeasonNumber = -1,
+                      TvdbId = 100
+                  });
+
+            Mocker.GetMock<ISceneMappingService>()
+                  .Setup(s => s.GetSceneSeasonNumber(It.IsAny<string>(), It.IsAny<string>()))
+                  .Returns(4);
+
+            Mocker.GetMock<ISeriesService>()
+                  .Setup(s => s.FindByTvdbId(It.IsAny<int>()))
+                  .Returns(new Series
+                  {
+                      Id = 1,
+                      TvdbId = 100,
+                      Title = "Phantom"
+                  });
+
+            var remoteEpisode = Subject.Map(parsedEpisodeInfo, 0, 0, null);
+        }
     }
 }
