@@ -9,7 +9,7 @@ namespace NzbDrone.Core.Notifications.Mailgun
     {
         private readonly IMailgunProxy _proxy;
         private readonly Logger _logger;
-        
+
         public MailGun(IMailgunProxy proxy, Logger logger)
         {
             _proxy = proxy;
@@ -27,6 +27,20 @@ namespace NzbDrone.Core.Notifications.Mailgun
         public override void OnDownload(DownloadMessage downloadMessage)
         {
             _proxy.SendNotification(MOVIE_GRABBED_TITLE, downloadMessage.Message, Settings);
+        }
+
+        public override void OnMovieFileDelete(MovieFileDeleteMessage deleteMessage)
+        {
+            var body = $"{deleteMessage.Message} deleted.";
+
+            _proxy.SendNotification(MOVIE_FILE_DELETED_TITLE, body, Settings);
+        }
+
+        public override void OnMovieDelete(MovieDeleteMessage deleteMessage)
+        {
+            var body = $"{deleteMessage.Message}";
+
+            _proxy.SendNotification(MOVIE_DELETED_TITLE, body, Settings);
         }
 
         public override void OnHealthIssue(HealthCheck.HealthCheck healthCheckMessage)
@@ -51,7 +65,7 @@ namespace NzbDrone.Core.Notifications.Mailgun
                 _logger.Error(ex, "Unable to send test message though Mailgun.");
                 failures.Add(new ValidationFailure("", "Unable to send test message though Mailgun."));
             }
-            
+
             return new ValidationResult(failures);
         }
     }
